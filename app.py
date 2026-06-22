@@ -27,6 +27,7 @@ from werkzeug.utils import secure_filename
 
 import scanfor_red as sr            # reuse analyze / process_image / paths / enrichment
 from generate_excel import generate_excel as build_excel
+from enrich import ERROR_DESCRIPTIONS   # column-number -> human-readable error
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, sr.DEFAULT_FOLDER)   # Dashboard_Screenshot
@@ -115,6 +116,7 @@ def view_result(stem):
         processed=1,
         generated=when,
         viewing=True,
+        errors=ERROR_DESCRIPTIONS,
     )
 
 
@@ -162,6 +164,7 @@ def upload():
         overall=overall,
         processed=processed,
         generated=datetime.now().strftime("%Y-%m-%d %H:%M"),
+        errors=ERROR_DESCRIPTIONS,
     )
 
 

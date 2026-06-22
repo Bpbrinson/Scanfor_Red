@@ -17,6 +17,27 @@ import os
 import re
 
 
+# ── Error meaning per hour-column number ───────────────────────────────────────
+# Human-readable description of what a red cell in each column represents.
+# Shared by the web frontend (Error column) and the Excel report.
+ERROR_DESCRIPTIONS = {
+    0:  "General ERROR",
+    1:  "SSL algorithm blocked",
+    2:  "Java exception",
+    3:  "Null pointer exception",
+    4:  "JDBC/database issue",
+    5:  "SSL/TLS issue",
+    6:  "Bind/port failure",
+    7:  "General exception",
+    8:  "Missing Java class",
+    9:  "Algorithm negotiation failed",
+    10: "Expired token",
+    11: "SQL exception",
+    12: "Credential issue",
+    13: "Request timeout",
+}
+
+
 # ── Loader ─────────────────────────────────────────────────────────────────────
 
 def load_service_lookup(lookup_path: str = None) -> dict:

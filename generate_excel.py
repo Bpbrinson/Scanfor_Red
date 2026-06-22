@@ -34,6 +34,12 @@ except Exception:
     def _ensure_enriched(records):
         return records
 
+# Column-number -> human-readable error (shared with the web frontend).
+try:
+    from enrich import ERROR_DESCRIPTIONS
+except Exception:
+    ERROR_DESCRIPTIONS = {}
+
 
 # ── Colour palette ────────────────────────────────────────────────────────────
 NAVY        = "1F3864"
@@ -117,10 +123,10 @@ def _build_data_sheet(ws, records):
     """Full alert table with enrichment columns (reorganized layout)."""
     headers = [
         "System", "Log File", "Col", "Count",
-        "Service", "Error Description", "Remediation Hint", "Working On",
+        "Service", "Error", "Error Description", "Remediation Hint", "Working On",
         "Ticket Exists", "Ticket ID", "Ticket Notes",
     ]
-    col_widths = [42, 62, 7, 9, 18, 32, 52, 52, 26, 14, 16]
+    col_widths = [42, 62, 7, 9, 18, 26, 32, 52, 52, 26, 14, 16]
 
     # Header row
     for c, (h, w) in enumerate(zip(headers, col_widths), start=1):
@@ -139,6 +145,7 @@ def _build_data_sheet(ws, records):
             rec.get("column"),
             rec.get("count"),
             rec.get("service_name", ""),
+            ERROR_DESCRIPTIONS.get(rec.get("column"), ""),   # Error (by column number)
             em.get("error_description", ""),
             em.get("remediation_hint", ""),
             em.get("escalation_team", ""),   # "Working On"
@@ -149,10 +156,10 @@ def _build_data_sheet(ws, records):
         for c, val in enumerate(row_vals, start=1):
             cell = ws.cell(row=r_idx, column=c, value=val)
             cell.alignment = _wrap() if c in (3, 4, 5) else Alignment(
-                vertical="top", wrap_text=(c >= 6)
+                vertical="top", wrap_text=(c >= 7)
             )
             # Highlight manual ticket columns with amber tint
-            if c in (9, 10, 11):
+            if c in (10, 11, 12):
                 cell.fill = _fill(AMBER_FILL)
                 cell.font = _font(color=AMBER_HDR, italic=True)
 
@@ -279,25 +286,9 @@ def _build_by_system_sheet(ws, records):
 
 
 def _build_by_column_sheet(ws, records):
-    """One row per column number — maps column index to error type."""
-    ERROR_PATTERNS = {
-        0:  "^20..-..-..[T ]..:..:..\\.\\d+ Error",
-        1:  "conform.to.algorithm.constraints",
-        2:  "java[.].*exception",
-        3:  "java.lang.NullPointerException",
-        4:  "java.jdbc",
-        5:  "javax.net.ssl",
-        6:  "Bind.Failed",
-        7:  "^Exception",
-        8:  "java.lang.NoClassDefFoundError",
-        9:  "Algorithm.negotiation.fail",
-        10: "ExpiredToken",
-        11: "SQLException",
-        12: "credentials",
-        13: "Return.Code..408",
-    }
+    """One row per column number — maps column index to its error meaning."""
     cols_seen = sorted({r["column"] for r in records if r.get("column") is not None})
-    headers = ["Column", "Error Pattern", "Alert Rows", "Total Count", "Systems Affected"]
+    headers = ["Column", "Error", "Alert Rows", "Total Count", "Systems Affected"]
     col_widths = [9, 46, 13, 14, 46]
 
     for c, (h, w) in enumerate(zip(headers, col_widths), start=1):
@@ -309,7 +300,7 @@ def _build_by_column_sheet(ws, records):
         recs = [r for r in records if r.get("column") == col_idx]
         systems = ", ".join(sorted({r["system"] for r in recs}))
         rows.append([col_idx,
-                     ERROR_PATTERNS.get(col_idx, f"Column {col_idx}"),
+                     ERROR_DESCRIPTIONS.get(col_idx, f"Column {col_idx}"),
                      len(recs),
                      sum((r.get("count") or 0) for r in recs),
                      systems])

@@ -83,7 +83,8 @@
             <table class="grid">
               <thead>
                 <tr><th>System</th><th>Log File</th><th>Col</th><th>Count</th>
-                    <th>Service</th><th>Ticket Created?</th><th>Ticket ID</th><th>Notes</th></tr>
+                    <th>Service</th><th>Error</th>
+                    <th>Ticket Created?</th><th>Ticket ID</th><th>Notes</th></tr>
               </thead>
               <tbody>
                 {% for a in r.alerts %}
@@ -93,6 +94,7 @@
                   <td class="num">{{ a.column }}</td>
                   <td class="num">{{ a.count if a.count is not none else "—" }}</td>
                   <td>{{ a.service_name }}</td>
+                  <td>{{ errors.get(a.column, '') }}</td>
                   <td><input type="text" class="ticket-input" data-field="exists" placeholder="Yes / No"
                              data-saved="{{ a.ticket_exists or '' }}" value="{{ a.ticket_exists or '' }}"></td>
                   <td><input type="text" class="ticket-input" data-field="id" placeholder="e.g. JIRA-123"
