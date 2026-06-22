@@ -13,6 +13,8 @@ __pycache__/
 .git/
 .gitignore
 README.md
+DOCKERHUB.md
+run.sh
 /index.html          # the root mock page only — NOT templates/index.html
 
 # Exclude result JSONs but keep the service lookup table the app needs.
