@@ -1,0 +1,6 @@
+# Normalize line endings in the repo to LF.
+* text=auto
+
+# Shell scripts must stay LF so they run on macOS/Linux even when committed
+# from Windows (CRLF would break the shebang).
+*.sh text eol=lf
