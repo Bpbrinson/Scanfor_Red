@@ -1,0 +1,261 @@
+[
+  {
+    "service_pattern": "fordserver",
+    "friendly_name": "Ford Connectivity Gateway Server",
+    "error_description": "Manages the data bridge between lab VMs and Ford vehicle telematics systems. Routes CAN bus messages, processes telemetry frames, and forwards connectivity events to downstream storage.",
+    "remediation_hint": "1) Confirm Ford SIM provider network reachability. 2) Verify CAN bus adapter status on the Linux host. 3) Check fordserver-main log for the specific error class (SSL, JDBC, timeout). 4) Restart if connection pool is exhausted.",
+    "escalation_team": "Ford Integration Team"
+  },
+  {
+    "service_pattern": "fordlistener",
+    "friendly_name": "Ford Inbound Listener",
+    "error_description": "Listens for inbound data frames originating from Ford vehicles. Acts as the entry point for Ford vehicle-to-cloud events before they are handed to fordserver for processing.",
+    "remediation_hint": "1) Check that the listener port is not already in use. 2) Verify Ford SIM provider inbound connectivity. 3) Confirm service account credentials have not been rotated. 4) Restart the listener process if it has lost its socket binding.",
+    "escalation_team": "Ford Integration Team"
+  },
+  {
+    "service_pattern": "bmwserver",
+    "friendly_name": "BMW Connectivity Gateway Server",
+    "error_description": "Handles telematics data flow between the lab and BMW vehicle systems. Processes BMW protocol messages and routes them to the storage pipeline.",
+    "remediation_hint": "1) Confirm BMW SIM provider connectivity. 2) Check BMW protocol adapter config for stale endpoints. 3) Verify SSL certs for the BMW endpoint. 4) Restart if connection pool is in CLOSE_WAIT state.",
+    "escalation_team": "BMW Integration Team"
+  },
+  {
+    "service_pattern": "bmwlistener",
+    "friendly_name": "BMW Inbound Listener",
+    "error_description": "Listens for inbound data from BMW vehicles. Entry point for BMW vehicle events before routing to bmwserver.",
+    "remediation_hint": "1) Check listener port binding. 2) Verify BMW inbound SIM connectivity. 3) Check credentials have not been rotated. 4) Restart if socket is stuck.",
+    "escalation_team": "BMW Integration Team"
+  },
+  {
+    "service_pattern": "hondaserver",
+    "friendly_name": "Honda Connectivity Gateway Server",
+    "error_description": "Processes telematics data from Honda vehicles. Transforms Honda protocol messages for storage and downstream analytics.",
+    "remediation_hint": "1) Confirm Honda SIM provider reachability. 2) Verify SSL certificates for Honda endpoints. 3) Check for connection pool exhaustion. 4) Restart the process if JDBC errors are co-occurring.",
+    "escalation_team": "Honda Integration Team"
+  },
+  {
+    "service_pattern": "hondalistener",
+    "friendly_name": "Honda Inbound Listener",
+    "error_description": "Listens for inbound Honda vehicle events. Feeds data to hondaserver for processing and storage.",
+    "remediation_hint": "1) Confirm Honda inbound network reachability. 2) Check port binding status. 3) Review credentials and SSL configuration.",
+    "escalation_team": "Honda Integration Team"
+  },
+  {
+    "service_pattern": "mazdaserver",
+    "friendly_name": "Mazda Connectivity Gateway Server",
+    "error_description": "Manages telematics data exchange for Mazda vehicles. Processes Mazda-protocol connectivity events and routes them to downstream storage.",
+    "remediation_hint": "1) Confirm Mazda SIM provider connectivity. 2) Verify SSL certs and cipher suite compatibility. 3) Review connection pool health. 4) Escalate if count spikes exceed 1000 — Mazda events are high-volume.",
+    "escalation_team": "Mazda Integration Team"
+  },
+  {
+    "service_pattern": "nissanlistener",
+    "friendly_name": "Nissan Inbound Listener",
+    "error_description": "Listens for inbound telematics events from Nissan vehicles. Entry point for Nissan vehicle-to-cloud data.",
+    "remediation_hint": "1) Check listener port and socket binding. 2) Verify Nissan SIM provider connectivity. 3) Confirm credentials are current. 4) Review inbound queue depth.",
+    "escalation_team": "Nissan Integration Team"
+  },
+  {
+    "service_pattern": "fcaserver",
+    "friendly_name": "FCA Connectivity Gateway Server",
+    "error_description": "Processes telematics data from Fiat Chrysler Automobiles (FCA/Stellantis) vehicles. Handles protocol translation and downstream routing.",
+    "remediation_hint": "1) Verify FCA SIM provider reachability. 2) Check SSL cert validity for FCA endpoints. 3) Review JDBC connection pool. 4) Escalate to FCA Integration Team if errors persist beyond 30 minutes.",
+    "escalation_team": "FCA Integration Team"
+  },
+  {
+    "service_pattern": "fcalistener",
+    "friendly_name": "FCA Inbound Listener",
+    "error_description": "Listens for inbound data from FCA/Stellantis vehicles. Routes raw frames to fcaserver for processing.",
+    "remediation_hint": "1) Check port binding. 2) Confirm FCA SIM provider inbound connectivity. 3) Review credentials and SSL config.",
+    "escalation_team": "FCA Integration Team"
+  },
+  {
+    "service_pattern": "jlrlistener",
+    "friendly_name": "Jaguar Land Rover Inbound Listener",
+    "error_description": "Listens for inbound telematics events from Jaguar Land Rover vehicles. Entry point for all JLR vehicle-originated data.",
+    "remediation_hint": "1) Verify JLR SIM provider connectivity. 2) Check listener port and socket binding. 3) Confirm SSL certificates for JLR endpoints are valid.",
+    "escalation_team": "JLR Integration Team"
+  },
+  {
+    "service_pattern": "caterpillarserver",
+    "friendly_name": "Caterpillar Telematics Server",
+    "error_description": "Manages telematics data exchange for Caterpillar equipment. Handles industrial vehicle and equipment telemetry which often uses different protocol conventions from passenger vehicles.",
+    "remediation_hint": "1) Confirm Caterpillar SIM provider / APN connectivity. 2) Verify equipment serial/IMEI whitelist is current. 3) Check SSL cert and cipher compatibility — industrial equipment firmware may lag on TLS versions.",
+    "escalation_team": "Caterpillar Integration Team"
+  },
+  {
+    "service_pattern": "lucid",
+    "friendly_name": "Lucid Motors Telematics Service",
+    "error_description": "Handles telematics data from Lucid Motors vehicles. Processes Lucid-specific connectivity events and routes them to downstream storage.",
+    "remediation_hint": "1) Confirm Lucid SIM/network provider reachability. 2) Verify SSL and algorithm compatibility — Lucid may require newer TLS configurations. 3) Check credentials and token expiry.",
+    "escalation_team": "Lucid Integration Team"
+  },
+  {
+    "service_pattern": "aerisserver",
+    "friendly_name": "Aeris Carrier Gateway Server",
+    "error_description": "Manages the connectivity layer with the Aeris IoT carrier. Processes carrier-level events, device provisioning messages, and data sessions from Aeris-managed SIMs.",
+    "remediation_hint": "1) Check Aeris portal for carrier-side outages or maintenance. 2) Verify Aeris API credentials and OAuth token validity. 3) Confirm SSL cert chain for Aeris endpoints. 4) Review Aeris session log for device-level errors.",
+    "escalation_team": "Connectivity Platform Team"
+  },
+  {
+    "service_pattern": "aerislistener",
+    "friendly_name": "Aeris Carrier Inbound Listener",
+    "error_description": "Listens for inbound events and callbacks from the Aeris IoT carrier platform. Handles device status updates, data session events, and alert notifications from Aeris-managed SIMs.",
+    "remediation_hint": "1) Verify listener port is not already bound. 2) Check Aeris webhook/callback configuration is pointing to this endpoint. 3) Confirm SSL cert for the listener is valid and trusted by Aeris.",
+    "escalation_team": "Connectivity Platform Team"
+  },
+  {
+    "service_pattern": "attlistener",
+    "friendly_name": "AT&T Carrier Inbound Listener",
+    "error_description": "Listens for inbound events and notifications from AT&T's carrier platform. Handles device data session events, SMS delivery receipts, and status callbacks from AT&T-managed SIMs.",
+    "remediation_hint": "1) Check AT&T Control Center for carrier-side issues. 2) Verify listener port binding and SSL certificate. 3) Confirm AT&T callback URL configuration is pointing to this service. 4) Review credentials for AT&T API access.",
+    "escalation_team": "Connectivity Platform Team"
+  },
+  {
+    "service_pattern": "etisalatlistener",
+    "friendly_name": "Etisalat Carrier Inbound Listener",
+    "error_description": "Listens for inbound events from the Etisalat (e&) carrier platform in the UAE/MENA region. Handles SIM-level events and data session callbacks for Etisalat-managed devices.",
+    "remediation_hint": "1) Check Etisalat carrier portal for regional outages. 2) Verify listener SSL cert and port binding. 3) Confirm Etisalat API credentials are current. 4) Be aware of regional time zone differences when interpreting timestamps.",
+    "escalation_team": "Connectivity Platform Team"
+  },
+  {
+    "service_pattern": "etisalatsmppserver",
+    "friendly_name": "Etisalat SMPP Server",
+    "error_description": "Implements the SMPP (Short Message Peer-to-Peer) protocol connection to the Etisalat carrier for SMS routing. Manages the persistent SMPP session and handles message delivery and status reports.",
+    "remediation_hint": "1) Verify the SMPP session is bound — check for 'BIND_TRANSCEIVER' confirmation in the log. 2) Confirm SMPP credentials (system_id/password) have not been rotated by Etisalat. 3) Check TCP keep-alive settings — SMPP sessions can drop silently on idle links.",
+    "escalation_team": "Connectivity Platform Team"
+  },
+  {
+    "service_pattern": "stcsmppserver",
+    "friendly_name": "STC SMPP Server",
+    "error_description": "Implements the SMPP protocol connection to Saudi Telecom Company (STC) for SMS routing in the Saudi Arabia/Gulf region. Manages persistent SMPP sessions and message delivery.",
+    "remediation_hint": "1) Check SMPP session bind status in the log. 2) Confirm STC SMPP credentials have not changed. 3) Verify TCP connectivity to STC SMPP gateway on the configured port. 4) Monitor for enquire_link timeouts which indicate a dropped session.",
+    "escalation_team": "Connectivity Platform Team"
+  },
+  {
+    "service_pattern": "vodafonesmppserver",
+    "friendly_name": "Vodafone SMPP Server",
+    "error_description": "Implements the SMPP protocol connection to Vodafone for SMS routing. Manages the persistent Vodafone SMPP session and handles delivery reports and status notifications.",
+    "remediation_hint": "1) Verify SMPP session is bound to Vodafone gateway. 2) Confirm Vodafone SMPP credentials are current. 3) Check for enquire_link failures indicating a stale session. 4) Escalate to Vodafone if the bind is rejected after fresh credentials.",
+    "escalation_team": "Connectivity Platform Team"
+  },
+  {
+    "service_pattern": "smslistener",
+    "friendly_name": "SMS Listener Service",
+    "error_description": "Listens for inbound SMS messages from vehicle SIM cards and routes them into the data processing pipeline. Primary channel for vehicle-originated event notifications.",
+    "remediation_hint": "1) Check SMS gateway connectivity and authentication. 2) Verify listener port is not already in use (run ss -tlnp). 3) Confirm service account credentials. 4) Review inbound queue depth for backlog.",
+    "escalation_team": "Connectivity Platform Team"
+  },
+  {
+    "service_pattern": "smserver",
+    "friendly_name": "Subscription Management Server",
+    "error_description": "Manages vehicle subscription lifecycles — activations, suspensions, and terminations. Coordinates with carrier platforms to update SIM states and billing records.",
+    "remediation_hint": "1) Check downstream carrier API availability. 2) Verify OAuth/API credentials for subscription management APIs. 3) Review pending subscription change queue for stuck records. 4) Escalate if bulk activations are failing — this affects vehicle delivery schedules.",
+    "escalation_team": "Subscription Management Team"
+  },
+  {
+    "service_pattern": "smlistener",
+    "friendly_name": "Subscription Management Listener",
+    "error_description": "Listens for inbound subscription lifecycle events and change requests. Routes events to smserver for processing.",
+    "remediation_hint": "1) Check listener port binding. 2) Verify connectivity from upstream systems. 3) Review message queue for accumulated backlog.",
+    "escalation_team": "Subscription Management Team"
+  },
+  {
+    "service_pattern": "intsmlistener",
+    "friendly_name": "Internal Subscription Management Listener",
+    "error_description": "Internal-facing listener for subscription management events generated within the platform. Handles inter-service subscription state change notifications.",
+    "remediation_hint": "1) Check internal network connectivity between services. 2) Verify port binding on the internal interface. 3) Review internal event queue for accumulated messages.",
+    "escalation_team": "Subscription Management Team"
+  },
+  {
+    "service_pattern": "bcmanagedeviceserver",
+    "friendly_name": "BC Device Management Server",
+    "error_description": "Manages device-level operations through the Broadcom (BC) device management layer. Handles device registration, configuration pushes, and lifecycle state changes.",
+    "remediation_hint": "1) Check Broadcom device management API availability. 2) Verify API credentials and token validity. 3) Review device operation queue for stuck records. 4) Check for bulk operations that may be overwhelming the API rate limits.",
+    "escalation_team": "Device Management Team"
+  },
+  {
+    "service_pattern": "bcsendsmsserver",
+    "friendly_name": "BC SMS Send Server",
+    "error_description": "Handles outbound SMS delivery through the Broadcom (BC) SMS gateway. Sends application-originated SMS messages to vehicle SIM cards.",
+    "remediation_hint": "1) Check Broadcom SMS gateway API availability. 2) Verify API credentials for SMS send operations. 3) Review outbound message queue for stuck or retrying messages. 4) Check for rate-limit responses (HTTP 429) from the SMS API.",
+    "escalation_team": "Connectivity Platform Team"
+  },
+  {
+    "service_pattern": "atlasjmslistener",
+    "friendly_name": "Atlas JMS Listener",
+    "error_description": "Listens on a Java Message Service (JMS) queue for events from the Atlas platform. Processes asynchronous inter-system messages and routes them for downstream handling.",
+    "remediation_hint": "1) Verify JMS broker connectivity and queue health. 2) Check JMS credentials and connection factory config. 3) Review queue depth — a growing backlog indicates the listener is processing slower than messages arrive. 4) Check for JMS session or connection leaks.",
+    "escalation_team": "Platform Engineering Team"
+  },
+  {
+    "service_pattern": "trapserver",
+    "friendly_name": "SNMP Trap Server",
+    "error_description": "Receives and processes SNMP trap notifications from network devices and VM infrastructure. Translates trap events into internal alert records.",
+    "remediation_hint": "1) Verify SNMP trap receiver port (typically 162) is open and not blocked by firewall. 2) Check that sending devices have this server's IP as their trap destination. 3) Review trap community string configuration.",
+    "escalation_team": "Infrastructure Team"
+  },
+  {
+    "service_pattern": "traplistener",
+    "friendly_name": "SNMP Trap Listener",
+    "error_description": "Low-level listener that receives raw SNMP trap UDP datagrams before they are processed by trapserver. Handles port binding and initial packet parsing.",
+    "remediation_hint": "1) Verify UDP port 162 is bound and reachable. 2) Check for firewall rules blocking inbound SNMP traffic. 3) Ensure no other SNMP daemon is already holding the port.",
+    "escalation_team": "Infrastructure Team"
+  },
+  {
+    "service_pattern": "icdserver",
+    "friendly_name": "ICD Interface Server",
+    "error_description": "Implements the Interface Control Document (ICD) protocol for vehicle data exchange. Manages the standardised data format contract between the lab platform and OEM back-end systems.",
+    "remediation_hint": "1) Verify the ICD schema version in use matches the OEM's current specification. 2) Check connectivity to the ICD-defined endpoints. 3) Review message validation errors — ICD violations often appear as SQL or JDBC errors downstream.",
+    "escalation_team": "Integration Architecture Team"
+  },
+  {
+    "service_pattern": "regionserver",
+    "friendly_name": "Data Region Server",
+    "error_description": "Manages regional data partitioning and write operations to the storage cluster. Errors here mean processed data is failing to persist.",
+    "remediation_hint": "1) Check storage cluster health. 2) Verify JDBC/ZooKeeper connectivity. 3) Check disk space with df -h. 4) Look for compaction or split operations holding write locks.",
+    "escalation_team": "Data Platform Team"
+  },
+  {
+    "service_pattern": "weblistener",
+    "friendly_name": "Web Interface Listener",
+    "error_description": "HTTP/HTTPS listener exposing the web interface or REST API endpoints of the platform. Handles inbound HTTP requests from external consumers or internal dashboards.",
+    "remediation_hint": "1) Check that the HTTP(S) port is bound and the SSL certificate is valid. 2) Verify upstream load balancer or reverse proxy configuration. 3) Review request logs for 4xx/5xx error patterns.",
+    "escalation_team": "Platform Engineering Team"
+  },
+  {
+    "service_pattern": "web",
+    "friendly_name": "Web Application Service",
+    "error_description": "The web application layer. Serves the platform UI or REST API. Errors typically indicate application startup failures, missing dependencies, or runtime exceptions in request handling.",
+    "remediation_hint": "1) Check application startup logs for missing config or classpath errors. 2) Verify database and upstream service connectivity. 3) Review HTTP 500 error patterns in the access log. 4) Check JVM heap if errors correlate with high traffic.",
+    "escalation_team": "Platform Engineering Team"
+  },
+  {
+    "service_pattern": "listener",
+    "friendly_name": "Generic Listener Service",
+    "error_description": "A general-purpose listener service. The generic name suggests this may be a shared or base listener component used by multiple integrations. Check the full log path for context on which integration is affected.",
+    "remediation_hint": "1) Review the full log path to identify which integration this listener belongs to. 2) Check port binding and network connectivity. 3) Verify credentials and SSL configuration for the relevant upstream system.",
+    "escalation_team": "Platform Engineering Team"
+  },
+  {
+    "service_pattern": "core",
+    "friendly_name": "Core Platform Service",
+    "error_description": "A core platform component. Errors here have the broadest impact as other services may depend on core for shared functionality, configuration, or connection management.",
+    "remediation_hint": "1) Check all downstream service dependencies immediately. 2) Review JVM heap and thread usage. 3) Verify configuration files after any recent deployment. 4) Escalate immediately if errors persist — core is on the critical path for all data flow.",
+    "escalation_team": "Core Platform Team"
+  },
+  {
+    "service_pattern": "log",
+    "friendly_name": "Log Directory (Misparse)",
+    "error_description": "The service name 'log' indicates the OCR read a log directory segment rather than the actual service name. This typically happens when the log file path format differs from the expected pattern (.../service_name/logfile).",
+    "remediation_hint": "Open the full log_file path in the alert and manually identify the service name. Add the correct service_pattern to service_lookup.json. This entry is a signal to review the path parsing logic in enrich.py.",
+    "escalation_team": "Unknown — review full log path"
+  },
+  {
+    "service_pattern": "TEMPLATE_COPY_ME",
+    "friendly_name": "Human-readable service name",
+    "error_description": "What this service does, what data it handles, and what typically goes wrong when errors appear in its log.",
+    "remediation_hint": "1) First thing to check. 2) Second thing to check. 3) Command to run on the Linux host. 4) Who to contact if steps 1-3 do not resolve.",
+    "escalation_team": "Team Name Here"
+  }
+]

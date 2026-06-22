@@ -1,0 +1,10 @@
+# Python dependencies for scanfor_red.
+# Note: opencv-python-headless (no GUI libs) is used because the app never
+# opens windows -- it only reads, processes, and writes image/JSON files.
+# This is the right choice for containers and servers.
+opencv-python-headless>=4.9
+numpy>=1.26
+pytesseract>=0.3.13
+openpyxl>=3.1
+# Web frontend (upload screenshots, view result summaries)
+Flask>=3.0

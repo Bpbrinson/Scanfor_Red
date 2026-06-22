@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scanfor Red — Upload Screenshots</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="banner">
+    <h1>Scanfor&nbsp;Red</h1>
+    <p>Upload a VM log alert dashboard screenshot to detect red (critical) alerts,
+       build the Excel report, and see a summary.</p>
+  </header>
+
+  <main>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+
+    <form class="uploader" id="upload-form" action="{{ url_for('upload') }}" method="post"
+          enctype="multipart/form-data">
+      <label class="drop" id="drop">
+        <input type="file" name="screenshots" id="file-input"
+               accept=".png,.jpg,.jpeg,.bmp" multiple required hidden>
+        <div class="drop-inner">
+          <div class="drop-icon">⬆</div>
+          <strong>Choose screenshots</strong>
+          <span>or drag &amp; drop — PNG, JPG, BMP. You can select more than one.</span>
+          <span class="picked" id="picked"></span>
+        </div>
+      </label>
+      <button type="submit" class="btn">Scan &amp; Generate Report</button>
+      <p class="hint">Large dashboards take ~30–60&nbsp;seconds each while OCR runs.</p>
+    </form>
+
+    {% if recent %}
+    <section class="recent">
+      <h2>Recent results</h2>
+      <table>
+        <thead>
+          <tr><th>Screenshot</th><th>Processed</th><th>Downloads</th></tr>
+        </thead>
+        <tbody>
+          {% for r in recent %}
+          <tr>
+            <td>{{ r.stem }}</td>
+            <td>{{ r.when.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td class="dl">
+              <a href="{{ url_for('view_result', stem=r.stem) }}">View</a>
+              <a href="{{ url_for('download_json', stem=r.stem) }}">JSON</a>
+              {% if r.has_excel %}
+                <a href="{{ url_for('download_excel', stem=r.stem) }}">Excel</a>
+              {% endif %}
+              <form method="post" action="{{ url_for('delete_result', stem=r.stem) }}" class="inline-form"
+                    onsubmit="return confirm('Delete {{ r.stem }}? This permanently removes its screenshot, JSON, and Excel report.');">
+                <button type="submit" class="del-btn">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    {% endif %}
+  </main>
+
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="overlay-card" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <h2 id="overlay-title">Scanning…</h2>
+      <p>Running OCR and building the Excel report. This can take ~30–60&nbsp;seconds
+         per screenshot — please keep this tab open.</p>
+      <div class="bar"><div class="bar-fill"></div></div>
+    </div>
+  </div>
+
+  <script>
+    const input = document.getElementById('file-input');
+    const picked = document.getElementById('picked');
+    const drop = document.getElementById('drop');
+    function show() {
+      picked.textContent = input.files.length
+        ? [...input.files].map(f => f.name).join(', ')
+        : '';
+    }
+    input.addEventListener('change', show);
+    ['dragover', 'dragenter'].forEach(e =>
+      drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach(e =>
+      drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
+    drop.addEventListener('drop', ev => { input.files = ev.dataTransfer.files; show(); });
+
+    // Show the loading overlay while the screenshots are processed. The form
+    // submits normally; the overlay stays until the results page replaces it.
+    // (A `required` empty file input blocks submit, so this only runs when valid.)
+    const form = document.getElementById('upload-form');
+    const overlay = document.getElementById('overlay');
+    form.addEventListener('submit', () => {
+      const n = input.files.length;
+      document.getElementById('overlay-title').textContent =
+        'Scanning ' + n + ' screenshot' + (n === 1 ? '' : 's') + '…';
+      overlay.classList.add('show');
+      const btn = form.querySelector('.btn');
+      if (btn) { btn.disabled = true; btn.textContent = 'Processing…'; }
+    });
+  </script>
+</body>
+</html>

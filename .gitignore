@@ -1,0 +1,29 @@
+# ── Python ────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# ── Virtual environments ──────────────────────────────────
+.venv/
+venv/
+env/
+
+# ── Generated reports (recreated on every scan) ───────────
+outputs/
+
+# ── Local screenshots / data (you upload your own) ────────
+# To ship a sample anyway: git add -f Dashboard_Screenshot/6_22.png
+Dashboard_Screenshot/
+
+# ── Legacy Node converter tooling ─────────────────────────
+node_modules/
+
+# ── Packaged archives ─────────────────────────────────────
+*.zip
+
+# ── Tooling / editor / OS ─────────────────────────────────
+.claude/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

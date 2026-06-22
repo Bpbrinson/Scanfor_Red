@@ -1,0 +1,34 @@
+# Two ways to run the same image:
+#
+#   Web frontend (default):
+#       docker compose up --build
+#       then open http://localhost:5000
+#
+#   Batch CLI (no browser — process the whole Dashboard_Screenshot folder):
+#       docker compose run --rm cli            # only new screenshots
+#       docker compose run --rm cli --force    # re-do everything
+#
+# Both folders are mounted into the container, so the files the app writes
+# appear right back on your machine:
+#   - Dashboard_Screenshot  : uploaded/processed screenshots + their JSON
+#   - outputs/json_to_excel : the generated Excel reports
+services:
+  web:
+    build: .
+    image: scanfor-red
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./Dashboard_Screenshot:/app/Dashboard_Screenshot
+      - ./outputs/json_to_excel:/app/outputs/json_to_excel
+
+  # Batch command-line processor. Hidden behind a profile so it does NOT start
+  # with `docker compose up`; invoke it explicitly with `docker compose run`.
+  cli:
+    build: .
+    image: scanfor-red
+    profiles: ["cli"]
+    volumes:
+      - ./Dashboard_Screenshot:/app/Dashboard_Screenshot
+      - ./outputs/json_to_excel:/app/outputs/json_to_excel
+    command: ["python", "scanfor_red.py"]

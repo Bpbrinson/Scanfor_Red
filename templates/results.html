@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scanfor Red — Results</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="banner">
+    <h1>Results</h1>
+    {% if viewing %}
+    <p>Saved result · last updated {{ generated }}</p>
+    {% else %}
+    <p>{{ processed }} screenshot(s) processed · {{ generated }}</p>
+    {% endif %}
+    <a class="back" href="{{ url_for('index') }}">← Scan more</a>
+  </header>
+
+  <main>
+    {% if overall %}
+    <section>
+      <h2>Overall summary</h2>
+      <div class="kpis">
+        <div class="kpi"><span>{{ overall.total_alerts }}</span>Red alerts</div>
+        <div class="kpi"><span>{{ overall.unique_systems }}</span>Systems</div>
+        <div class="kpi"><span>{{ overall.unique_services }}</span>Services</div>
+        <div class="kpi"><span>{{ overall.unique_logs }}</span>Log files</div>
+        <div class="kpi"><span>{{ "{:,}".format(overall.total_count) }}</span>Total count</div>
+        <div class="kpi"><span>{{ "{:,}".format(overall.peak) }}</span>Peak cell</div>
+      </div>
+
+      <h3>Top systems by total count</h3>
+      <table class="grid">
+        <thead><tr><th>System</th><th>Alerts</th><th>Total Count</th></tr></thead>
+        <tbody>
+          {% for s in overall.top_systems %}
+          <tr>
+            <td>{{ s.system }}</td>
+            <td class="num">{{ s.alerts }}</td>
+            <td class="num">{{ "{:,}".format(s.total) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    {% endif %}
+
+    <section>
+      <h2>Per screenshot</h2>
+      {% for r in results %}
+      <article class="card" data-stem="{{ r.stem }}">
+        <div class="card-head">
+          <h3>{{ r.name }}</h3>
+          {% if 'error' not in r %}
+          <div class="dl">
+            <button type="button" class="save-btn" data-stem="{{ r.stem }}">Save tickets to Excel</button>
+            <span class="save-status"></span>
+            <a href="{{ url_for('download_excel', stem=r.stem) }}">Download Excel</a>
+            <a href="{{ url_for('download_json', stem=r.stem) }}">Download JSON</a>
+            <form method="post" action="{{ url_for('delete_result', stem=r.stem) }}" class="inline-form"
+                  onsubmit="return confirm('Delete {{ r.stem }}? This permanently removes its screenshot, JSON, and Excel report.');">
+              <button type="submit" class="del-btn">Delete</button>
+            </form>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if 'error' in r %}
+          <p class="error">⚠ {{ r.error }}</p>
+        {% else %}
+          <div class="kpis small">
+            <div class="kpi"><span>{{ r.summary.total_alerts }}</span>Red alerts</div>
+            <div class="kpi"><span>{{ r.summary.unique_systems }}</span>Systems</div>
+            <div class="kpi"><span>{{ r.summary.unique_services }}</span>Services</div>
+            <div class="kpi"><span>{{ "{:,}".format(r.summary.total_count) }}</span>Total count</div>
+            <div class="kpi"><span>{{ "{:,}".format(r.summary.peak) }}</span>Peak cell</div>
+          </div>
+
+          {% if r.alerts %}
+          <details>
+            <summary>{{ r.summary.total_alerts }} alert row(s)</summary>
+            <table class="grid">
+              <thead>
+                <tr><th>System</th><th>Log File</th><th>Col</th><th>Count</th>
+                    <th>Service</th><th>Ticket Created?</th><th>Ticket ID</th><th>Notes</th></tr>
+              </thead>
+              <tbody>
+                {% for a in r.alerts %}
+                <tr data-system="{{ a.system }}" data-log="{{ a.log_file }}" data-col="{{ a.column }}">
+                  <td>{{ a.system }}</td>
+                  <td class="mono">{{ a.log_file }}</td>
+                  <td class="num">{{ a.column }}</td>
+                  <td class="num">{{ a.count if a.count is not none else "—" }}</td>
+                  <td>{{ a.service_name }}</td>
+                  <td><input type="text" class="ticket-input" data-field="exists" placeholder="Yes / No"
+                             data-saved="{{ a.ticket_exists or '' }}" value="{{ a.ticket_exists or '' }}"></td>
+                  <td><input type="text" class="ticket-input" data-field="id" placeholder="e.g. JIRA-123"
+                             data-saved="{{ a.ticket_id or '' }}" value="{{ a.ticket_id or '' }}"></td>
+                  <td><input type="text" class="ticket-input wide" data-field="notes" placeholder="Notes"
+                             data-saved="{{ a.ticket_notes or '' }}" value="{{ a.ticket_notes or '' }}"></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </details>
+          {% else %}
+            <p class="none">No red alerts detected in this screenshot.</p>
+          {% endif %}
+        {% endif %}
+      </article>
+      {% endfor %}
+    </section>
+  </main>
+
+  <script>
+    // localStorage key for one input: screenshot + row identity + field.
+    function lsKey(input) {
+      var tr = input.closest('tr');
+      return 'ticket:' + [tr.closest('.card').dataset.stem, tr.dataset.system,
+                          tr.dataset.log, tr.dataset.col, input.dataset.field].join('|');
+    }
+    var val = function (i) { return (i.value || '').trim(); };
+    var savedVal = function (i) { return (i.dataset.saved || '').trim(); };
+
+    function cardInputs(card) { return [...card.querySelectorAll('.ticket-input')]; }
+    function isDirty(card) { return cardInputs(card).some(function (i) { return val(i) !== savedVal(i); }); }
+    function hasSaved(card) { return cardInputs(card).some(function (i) { return savedVal(i); }); }
+
+    // The "saved ✓ / Unsaved changes" indicator reflects current inputs vs what
+    // is stored on the server (the data-saved attribute = persisted value).
+    function refresh(card) {
+      var s = card.querySelector('.save-status');
+      if (!s) return;
+      if (isDirty(card)) { s.textContent = 'Unsaved changes'; s.className = 'save-status dirty'; }
+      else if (hasSaved(card)) { s.textContent = 'Saved ✓'; s.className = 'save-status saved'; }
+      else { s.textContent = ''; s.className = 'save-status'; }
+    }
+
+    // Restore any unsaved browser draft, and track edits.
+    document.querySelectorAll('.ticket-input').forEach(function (input) {
+      var key = lsKey(input);
+      var draft = localStorage.getItem(key);
+      if (draft !== null) input.value = draft;
+      input.addEventListener('input', function () {
+        if (val(input)) localStorage.setItem(key, input.value);
+        else localStorage.removeItem(key);
+        refresh(input.closest('.card'));
+      });
+    });
+
+    // "Save tickets to Excel" — POST this card's rows; server updates the JSON
+    // and regenerates the workbook, then we mark the inputs as saved.
+    document.querySelectorAll('.save-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var card = btn.closest('.card');
+        var status = card.querySelector('.save-status');
+        var rows = [];
+        card.querySelectorAll('tbody tr').forEach(function (tr) {
+          var get = function (f) {
+            var el = tr.querySelector('.ticket-input[data-field="' + f + '"]');
+            return el ? val(el) : '';
+          };
+          rows.push({
+            system: tr.dataset.system, log_file: tr.dataset.log, column: Number(tr.dataset.col),
+            ticket: get('exists'), ticket_id: get('id'), ticket_notes: get('notes'),
+          });
+        });
+        btn.disabled = true;
+        status.textContent = 'Saving…'; status.className = 'save-status';
+        fetch('/save-tickets/' + encodeURIComponent(card.dataset.stem), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tickets: rows }),
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (d.ok) {
+              cardInputs(card).forEach(function (i) { i.dataset.saved = val(i); });
+              refresh(card);
+            } else {
+              status.textContent = 'Error: ' + (d.error || 'failed');
+              status.className = 'save-status dirty';
+            }
+          })
+          .catch(function () { status.textContent = 'Error saving'; status.className = 'save-status dirty'; })
+          .finally(function () { btn.disabled = false; });
+      });
+    });
+
+    // Initial indicator state (e.g. when reopening a saved result).
+    document.querySelectorAll('.card').forEach(refresh);
+  </script>
+</body>
+</html>

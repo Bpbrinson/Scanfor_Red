@@ -1,0 +1,20 @@
+# Keep the build context small. Screenshots and their JSON/Excel results are
+# provided at run time via volume mounts, not baked into the image.
+Dashboard_Screenshot/
+outputs/
+node_modules/
+backup_*/
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.pyc
+__pycache__/
+.git/
+.gitignore
+README.md
+/index.html          # the root mock page only — NOT templates/index.html
+
+# Exclude result JSONs but keep the service lookup table the app needs.
+*.json
+!service_lookup.json
