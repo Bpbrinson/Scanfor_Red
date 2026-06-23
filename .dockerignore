@@ -17,6 +17,7 @@ DOCKERHUB.md
 run.sh
 /index.html          # the root mock page only — NOT templates/index.html
 
-# Exclude result JSONs but keep the service lookup table the app needs.
+# Exclude result JSONs but keep the config tables the app needs.
 *.json
 !service_lookup.json
+!ticket_registry.json

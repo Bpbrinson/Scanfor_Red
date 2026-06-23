@@ -20,8 +20,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
-# Application code, web frontend, and the service lookup table for enrichment.
-COPY scanfor_red.py enrich.py generate_excel.py service_lookup.json app.py ./
+# Application code, web frontend, and the config tables (service enrichment +
+# known-error ticket registry).
+COPY scanfor_red.py enrich.py generate_excel.py ticket_registry.py \
+     service_lookup.json ticket_registry.json app.py ./
 COPY templates ./templates
 COPY static ./static
 

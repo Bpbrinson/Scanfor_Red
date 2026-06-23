@@ -48,6 +48,9 @@
 
     <section>
       <h2>Per screenshot</h2>
+      <p class="section-note">Ticket fields are pre-filled from your known-errors
+         list. Editing and clicking <strong>Save tickets</strong> updates both the
+         report and that list, so recurring errors fill in automatically next time.</p>
       {% for r in results %}
       <article class="card" data-stem="{{ r.stem }}">
         <div class="card-head">

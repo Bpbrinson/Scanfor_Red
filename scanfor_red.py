@@ -43,6 +43,7 @@ import pytesseract
 # ── Enrichment layer ──────────────────────────────────────────
 from enrich import load_service_lookup, enrich_with_service_info
 from generate_excel import generate_excel
+from ticket_registry import load_registry, build_index, apply_to_alert
 
 # Load once at startup — not on every image
 SERVICE_LOOKUP = load_service_lookup()
@@ -288,6 +289,12 @@ def output_path_for(image_path):
 def process_image(image_path, output_path):
     """Analyze one screenshot, write its JSON, and auto-generate the Excel report."""
     alerts = analyze(str(image_path))
+
+    # Pre-fill ticket columns from the known-error registry, so recurring errors
+    # arrive already marked (loaded fresh so it reflects the latest saves).
+    ticket_index = build_index(load_registry())
+    for alert in alerts:
+        apply_to_alert(alert, ticket_index)
 
     # JSON and Excel share this folder; create it before writing the JSON.
     out_dir = os.path.dirname(os.path.abspath(output_path))

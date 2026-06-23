@@ -21,6 +21,7 @@ services:
     volumes:
       - ./Dashboard_Screenshot:/app/Dashboard_Screenshot
       - ./outputs/json_to_excel:/app/outputs/json_to_excel
+      - ./ticket_registry.json:/app/ticket_registry.json   # persists known tickets
 
   # Batch command-line processor. Hidden behind a profile so it does NOT start
   # with `docker compose up`; invoke it explicitly with `docker compose run`.
@@ -31,4 +32,5 @@ services:
     volumes:
       - ./Dashboard_Screenshot:/app/Dashboard_Screenshot
       - ./outputs/json_to_excel:/app/outputs/json_to_excel
+      - ./ticket_registry.json:/app/ticket_registry.json   # persists known tickets
     command: ["python", "scanfor_red.py"]

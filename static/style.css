@@ -112,6 +112,7 @@ details table { margin-top: 8px; }
 .error { color: #9b1c1c; font-weight: 600; }
 .none { color: var(--muted); }
 .recent { margin-top: 8px; }
+.section-note { color: var(--muted); font-size: 14px; margin: -4px 0 14px; }
 
 /* Loading overlay shown while screenshots are processed */
 .overlay {

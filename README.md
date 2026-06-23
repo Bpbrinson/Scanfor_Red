@@ -241,6 +241,44 @@ on the page.
 
 ---
 
+## 3c. Known-errors ticket list (auto-fill)
+
+So you don't re-enter ticket info on every report, recurring errors are tracked
+in **`ticket_registry.json`**. Every new report **pre-fills** the
+`Ticket Created?`, `Ticket ID`, and `Notes` columns from it (in the web table
+*and* the Excel).
+
+**You fill the list in two ways:**
+
+1. **Just triage once.** On a report, fill the ticket columns and click
+   **Save tickets** — the entry is remembered, so the same error (same
+   **system + service + column**) auto-fills on all future reports.
+2. **Hand-edit `ticket_registry.json`** — a list of entries:
+
+   ```json
+   [
+     {
+       "system": "labcore-mxmcpiog01",
+       "service": "listener",
+       "column": 11,
+       "ticket_exists": "Yes",
+       "ticket_id": "JIRA-1234",
+       "ticket_notes": "Known SQL timeout — ticket open"
+     }
+   ]
+   ```
+
+   - `column` is the hour number (see the error table in section 5). Omit it (or
+     use `null`) to match **any** column for that service.
+   - Omit `system` (or use `"*"`) to match the error on **any** host.
+   - Clearing all three ticket fields and saving **removes** that entry.
+
+> Stored next to the app. In Docker it's mounted (see `docker-compose.yml`) so it
+> persists. It will accumulate your real ticket IDs — if your Git repo is shared,
+> consider keeping it out of commits.
+
+---
+
 ## 4. Quick checklist if something goes wrong
 
 ### Local Python

@@ -28,6 +28,7 @@ from werkzeug.utils import secure_filename
 import scanfor_red as sr            # reuse analyze / process_image / paths / enrichment
 from generate_excel import generate_excel as build_excel
 from enrich import ERROR_DESCRIPTIONS   # column-number -> human-readable error
+from ticket_registry import upsert as upsert_registry
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, sr.DEFAULT_FOLDER)   # Dashboard_Screenshot
@@ -210,6 +211,7 @@ def save_tickets(stem):
         alerts = json.load(f)
 
     updated = 0
+    learned = []   # rows to teach the known-error registry
     for a in alerts:
         key = (a.get("system", ""), a.get("log_file", ""), a.get("column"))
         if key in keyed:
@@ -217,9 +219,18 @@ def save_tickets(stem):
             if any((a.get(k) or "") != v for k, v in fields.items()):
                 updated += 1
             a.update(fields)
+            learned.append({
+                "system": a.get("system", ""),
+                "service": a.get("service_name", ""),
+                "column": a.get("column"),
+                **fields,
+            })
 
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(alerts, f, indent=2)
+
+    # Remember these tickets so future reports auto-fill the same errors.
+    upsert_registry(learned)
 
     try:
         build_excel(json_path, folder)
