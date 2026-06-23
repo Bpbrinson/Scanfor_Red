@@ -15,6 +15,7 @@ __pycache__/
 README.md
 DOCKERHUB.md
 run.sh
+publish.sh
 /index.html          # the root mock page only — NOT templates/index.html
 
 # Exclude result JSONs but keep the config tables the app needs.
