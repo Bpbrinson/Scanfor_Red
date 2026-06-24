@@ -20,10 +20,17 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt gunicorn
 
+# Playwright browser for the "Capture Dashboard & Scan" feature in 'playwright'
+# mode. This pulls Chromium + its OS libraries and is the largest layer in the
+# image; if you only ever use SCREENSHOT_MODE=cdp (drive your own host Chrome),
+# you can delete this line to keep the image small.
+RUN playwright install --with-deps chromium
+
 # Application code, web frontend, and the config tables (service enrichment +
 # known-error ticket registry).
 COPY scanfor_red.py enrich.py generate_excel.py ticket_registry.py \
      service_lookup.json ticket_registry.json app.py ./
+COPY services ./services
 COPY templates ./templates
 COPY static ./static
 

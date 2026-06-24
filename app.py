@@ -29,6 +29,9 @@ import scanfor_red as sr            # reuse analyze / process_image / paths / en
 from generate_excel import generate_excel as build_excel
 from enrich import ERROR_DESCRIPTIONS   # column-number -> human-readable error
 from ticket_registry import upsert as upsert_registry
+from services.screenshot_capture import (
+    capture_dashboard_screenshot, ScreenshotError,
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, sr.DEFAULT_FOLDER)   # Dashboard_Screenshot
@@ -167,6 +170,51 @@ def upload():
         generated=datetime.now().strftime("%Y-%m-%d %H:%M"),
         errors=ERROR_DESCRIPTIONS,
     )
+
+
+@app.route("/api/capture-and-scan", methods=["POST"])
+def capture_and_scan():
+    """Capture a full-page screenshot of the configured dashboard, then run it
+    through the same scanner the upload flow uses.
+
+    Returns JSON. Reuses sr.process_image so the JSON + Excel products land in
+    outputs/json_to_excel/<stem>/ exactly like an uploaded screenshot would.
+    """
+    try:
+        capture = capture_dashboard_screenshot()
+    except ScreenshotError as exc:
+        # ScreenshotError messages are written to be user-safe (no URL/secrets).
+        return jsonify({"success": False, "message": str(exc)}), 502
+    except Exception:                              # noqa: BLE001 - don't leak internals
+        return jsonify({
+            "success": False,
+            "message": "Unexpected error while capturing the dashboard screenshot.",
+        }), 500
+
+    screenshot_path = capture["screenshot_path"]
+    stem = os.path.splitext(os.path.basename(screenshot_path))[0]
+    output_path = sr.output_path_for(screenshot_path)
+
+    try:
+        alerts = sr.process_image(screenshot_path, output_path)
+    except Exception as exc:                       # noqa: BLE001 - scanner failure is user-facing
+        return jsonify({
+            "success": False,
+            "message": f"Screenshot captured but scanning failed: {exc}",
+            "screenshot_path": screenshot_path,
+        }), 500
+
+    xlsx_path = os.path.join(os.path.dirname(output_path), stem + ".xlsx")
+    output_file = xlsx_path if os.path.isfile(xlsx_path) else output_path
+
+    return jsonify({
+        "success": True,
+        "screenshot_path": screenshot_path,
+        "stem": stem,
+        "red_boxes_found": len(alerts),
+        "output_file": output_file,
+        "message": "Screenshot captured and scan completed successfully.",
+    })
 
 
 @app.route("/download/<stem>/json")

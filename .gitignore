@@ -15,6 +15,14 @@ outputs/
 # To ship a sample anyway: git add -f Dashboard_Screenshot/6_22.png
 Dashboard_Screenshot/
 
+# ── Secrets / local config (never commit real values) ─────
+# Keep .env.example (the template) but ignore the real .env and any cookies/tokens.
+.env
+.env.*
+!.env.example
+*cookies*.json
+*token*.json
+
 # ── Legacy Node converter tooling ─────────────────────────
 node_modules/
 

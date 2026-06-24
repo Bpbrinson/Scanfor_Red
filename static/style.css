@@ -44,6 +44,18 @@ h3 { font-size: 16px; margin: 18px 0 8px; color: var(--navy); }
   padding: 12px 14px; border-radius: 8px; margin-bottom: 16px;
 }
 
+/* Capture dashboard & scan */
+.capture {
+  text-align: center; background: var(--card); border: 1px solid var(--line);
+  border-radius: 16px; padding: 22px 24px; margin-bottom: 20px;
+}
+.capture .btn { margin-top: 0; }
+.capture-status { margin-top: 12px; font-size: 14px; font-weight: 600; min-height: 20px; }
+.capture-status.working { color: var(--blue); }
+.capture-status.ok { color: var(--green); }
+.capture-status.err { color: #9b1c1c; }
+.capture-status a { color: var(--blue); margin-left: 6px; }
+
 /* Uploader */
 .uploader { text-align: center; }
 .drop {

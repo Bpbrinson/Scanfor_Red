@@ -20,6 +20,12 @@
       {% endif %}
     {% endwith %}
 
+    <section class="capture">
+      <button type="button" class="btn" id="capture-btn">Capture Dashboard &amp; Scan</button>
+      <p class="hint">Grabs a full-page screenshot of the configured dashboard and scans it automatically.</p>
+      <div class="capture-status" id="capture-status" role="status" aria-live="polite"></div>
+    </section>
+
     <form class="uploader" id="upload-form" action="{{ url_for('upload') }}" method="post"
           enctype="multipart/form-data">
       <label class="drop" id="drop">
@@ -105,6 +111,40 @@
       overlay.classList.add('show');
       const btn = form.querySelector('.btn');
       if (btn) { btn.disabled = true; btn.textContent = 'Processing…'; }
+    });
+
+    // Capture Dashboard & Scan: ask the backend to screenshot the configured
+    // dashboard and run it through the same scanner, then show the result.
+    const captureBtn = document.getElementById('capture-btn');
+    const captureStatus = document.getElementById('capture-status');
+    captureBtn.addEventListener('click', async () => {
+      captureBtn.disabled = true;
+      const original = captureBtn.textContent;
+      captureBtn.textContent = 'Capturing…';
+      captureStatus.className = 'capture-status working';
+      captureStatus.textContent = 'Capturing screenshot and scanning…';
+      try {
+        const resp = await fetch('{{ url_for("capture_and_scan") }}', { method: 'POST' });
+        const data = await resp.json();
+        if (data.success) {
+          captureStatus.className = 'capture-status ok';
+          const link = data.stem
+            ? ' <a href="/result/' + encodeURIComponent(data.stem) + '">View report</a>'
+            : '';
+          captureStatus.innerHTML =
+            'Done — ' + data.red_boxes_found + ' red box' +
+            (data.red_boxes_found === 1 ? '' : 'es') + ' found.' + link;
+        } else {
+          captureStatus.className = 'capture-status err';
+          captureStatus.textContent = data.message || 'Capture failed.';
+        }
+      } catch (e) {
+        captureStatus.className = 'capture-status err';
+        captureStatus.textContent = 'Could not reach the server. Is the app running?';
+      } finally {
+        captureBtn.disabled = false;
+        captureBtn.textContent = original;
+      }
     });
   </script>
 </body>

@@ -241,6 +241,94 @@ on the page.
 
 ---
 
+## 3d. Capture Dashboard & Scan (one-click screenshot)
+
+Instead of saving a screenshot yourself, the web frontend has a **Capture
+Dashboard & Scan** button that screenshots the live dashboard, saves it into
+`Dashboard_Screenshot`, and immediately runs the normal red-box scan on it.
+
+First copy the settings template and fill it in:
+
+```bash
+cp .env.example .env
+```
+
+There are **two capture modes** (set `SCREENSHOT_MODE` in `.env`).
+
+### Mode A — Playwright (app reaches the dashboard itself)
+
+Use this when the machine running Scanfor_Red can reach the dashboard directly.
+
+1. In `.env` set:
+
+   ```ini
+   DASHBOARD_URL=https://your-dashboard/...
+   SCREENSHOT_MODE=playwright
+   PLAYWRIGHT_HEADLESS=false
+   ```
+
+2. Install the browser once (local runs only — the Docker image already does this):
+
+   ```bash
+   python -m pip install playwright
+   playwright install chromium
+   ```
+
+3. Run the app and click **Capture Dashboard & Scan**.
+
+### Mode B — Existing Chrome over CDP (VPN-restricted dashboard) ← recommended here
+
+The real dashboard is **VPN-restricted and only reachable from your Mac while
+on the VPN**, and it requires a logged-in session. In this case let the app
+drive the Chrome **you** already logged into, over the DevTools protocol — no
+credentials are ever stored, and the app never reads cookies, tokens, or HTML.
+
+1. **On the Mac (on the VPN)**, start a dedicated Chrome with remote debugging:
+
+   ```bash
+   open -na "Google Chrome" --args \
+     --remote-debugging-port=9222 \
+     --user-data-dir="$HOME/chrome-dashboard-debug"
+   ```
+
+2. In that Chrome window, **log into the dashboard** and open:
+
+   ```
+   https://ud11.practicallabs.com:444/status/scanfor_report.html?<your-token>
+   ```
+
+3. In `.env` set:
+
+   ```ini
+   DASHBOARD_URL=https://ud11.practicallabs.com:444/status/scanfor_report.html?<your-token>
+   SCREENSHOT_MODE=cdp
+   # Running in Docker? host.docker.internal points the container at your Mac:
+   CHROME_CDP_URL=http://host.docker.internal:9222
+   # Running the app directly on the Mac (no Docker)? use localhost instead:
+   # CHROME_CDP_URL=http://localhost:9222
+   ```
+
+4. Start the app (`docker compose up --build`, or `python app.py`) and click
+   **Capture Dashboard & Scan**. The app finds the logged-in dashboard tab (or
+   opens one in that same session), captures a full-page screenshot, scans it,
+   and shows how many red boxes were found with a link to the report.
+
+> **Privacy:** screenshots and reports stay on your machine (git-ignored). The
+> app never logs the dashboard URL, page HTML, cookies, or tokens. Keep your
+> real values in `.env` only — never commit it.
+
+#### Things to do on the target machine (can't be done here)
+
+This computer has **no VPN/dashboard access**, so these steps must be run on the
+Mac that does:
+
+- Start the debugging Chrome (step 1) and log into the dashboard (step 2).
+- Put the real `DASHBOARD_URL` (with its session token) into `.env`.
+- Confirm `host.docker.internal:9222` is reachable from the container, e.g.
+  `curl http://host.docker.internal:9222/json/version` from inside it.
+
+---
+
 ## 3c. Known-errors ticket list (auto-fill)
 
 So you don't re-enter ticket info on every report, recurring errors are tracked
