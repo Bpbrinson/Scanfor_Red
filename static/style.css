@@ -173,6 +173,68 @@ details table { margin-top: 8px; }
 .save-status.saved { color: var(--green); }
 .save-status.dirty { color: var(--amber); }
 
+/* ── Registry management page ──────────────────────────────────────────────── */
+.reg-row-form {
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;
+}
+.reg-field {
+  display: flex; flex-direction: column; gap: 4px; flex: 1 1 200px;
+}
+.reg-field--sm   { flex: 0 1 130px; }
+.reg-field--grow { flex: 2 1 280px; }
+.reg-label {
+  font-size: 11px; font-weight: 700; color: var(--navy);
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.col-hint { font-size: 11px; color: var(--blue); min-height: 15px; }
+
+.reg-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 20px 0 10px; }
+.chip-group  { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  background: #fff; border: 1px solid var(--line); border-radius: 20px;
+  padding: 5px 14px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted);
+}
+.chip:hover { border-color: var(--blue); color: var(--blue); }
+.chip.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+.reg-grid { margin-top: 0; }
+.reg-row td { vertical-align: middle; }
+.reg-row.editing td { background: #f5f7ff; }
+
+.wild-badge {
+  display: inline-block; background: #e8edfa; color: var(--blue);
+  border-radius: 4px; padding: 1px 7px; font-size: 11px; font-weight: 700;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+.badge {
+  display: inline-block; border-radius: 20px; padding: 2px 10px;
+  font-size: 11px; font-weight: 700; letter-spacing: .2px;
+}
+.badge--yes { background: #d1fae5; color: #065f46; }
+.badge--no  { background: #fee2e2; color: #991b1b; }
+.err-pill {
+  display: inline-block; background: #fef3c7; color: var(--amber);
+  border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 600; white-space: nowrap;
+}
+.muted { color: var(--muted); }
+
+.reg-edit-btn {
+  background: var(--blue); color: #fff; border: 0;
+  border-radius: 6px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.reg-edit-btn:hover { background: #264a86; }
+.reg-save-btn {
+  background: var(--green); color: #fff; border: 0;
+  border-radius: 6px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.reg-save-btn:hover { background: #2c4a1d; }
+.reg-cancel-btn {
+  background: #fff; color: var(--muted); border: 1px solid var(--line);
+  border-radius: 6px; padding: 5px 11px; font-size: 12px; font-weight: 600; cursor: pointer; margin-left: 4px;
+}
+.reg-cancel-btn:hover { background: var(--bg); }
+.save-status.err { color: #9b1c1c; }
+
 .inline-form { display: inline; margin: 0; }
 .del-btn {
   background: #fff; color: #b3261e; border: 1px solid #e6b4b0;

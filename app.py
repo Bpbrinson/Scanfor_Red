@@ -28,7 +28,11 @@ from werkzeug.utils import secure_filename
 import scanfor_red as sr            # reuse analyze / process_image / paths / enrichment
 from generate_excel import generate_excel as build_excel
 from enrich import ERROR_DESCRIPTIONS   # column-number -> human-readable error
-from ticket_registry import upsert as upsert_registry
+from ticket_registry import (
+    upsert as upsert_registry,
+    load_registry,
+    delete_entry as delete_reg_entry,
+)
 from services.screenshot_capture import (
     capture_dashboard_screenshot, ScreenshotError,
 )
@@ -320,6 +324,94 @@ def delete_result(stem):
     else:
         flash(f"Nothing found to delete for {safe}.")
     return redirect(url_for("index"))
+
+
+# ── Known-alert registry management ─────────────────────────────────────────
+
+def _parse_col(v):
+    """Return int for a numeric column value, None for blank / '*' (wildcard)."""
+    try:
+        return int(v) if v not in (None, "", "*") else None
+    except (TypeError, ValueError):
+        return None
+
+
+@app.route("/registry")
+def registry():
+    entries = load_registry()
+    open_count = sum(1 for e in entries if e.get("ticket_exists") == "Yes")
+    wildcard_count = sum(
+        1 for e in entries
+        if (not e.get("system") or e.get("system") == "*") or e.get("column") is None
+    )
+    return render_template(
+        "registry.html",
+        entries=entries,
+        errors=ERROR_DESCRIPTIONS,
+        total=len(entries),
+        open_count=open_count,
+        wildcard_count=wildcard_count,
+    )
+
+
+@app.route("/api/registry/upsert", methods=["POST"])
+def registry_upsert():
+    data = request.get_json(silent=True) or {}
+    service = (data.get("service") or "").strip()
+    if not service:
+        return jsonify({"ok": False, "error": "service is required"}), 400
+    item = {
+        "system": (data.get("system") or "").strip() or "*",
+        "service": service,
+        "column": _parse_col(data.get("column")),
+        "ticket_exists": (data.get("ticket_exists") or "").strip(),
+        "ticket_id": (data.get("ticket_id") or "").strip(),
+        "ticket_notes": (data.get("ticket_notes") or "").strip(),
+    }
+    count = upsert_registry([item])
+    return jsonify({"ok": True, "total": count})
+
+
+@app.route("/api/registry/delete", methods=["POST"])
+def registry_delete():
+    data = request.get_json(silent=True) or {}
+    service = (data.get("service") or "").strip()
+    if not service:
+        return jsonify({"ok": False, "error": "service is required"}), 400
+    system = (data.get("system") or "").strip() or "*"
+    removed = delete_reg_entry(system, service, _parse_col(data.get("column")))
+    return jsonify({"ok": removed})
+
+
+@app.route("/api/registry/update", methods=["POST"])
+def registry_update():
+    """Replace one registry entry. old_key identifies the existing row; new_entry is the replacement."""
+    data = request.get_json(silent=True) or {}
+    old = data.get("old_key", {})
+    new = data.get("new_entry", {})
+    service = (new.get("service") or "").strip()
+    if not service:
+        return jsonify({"ok": False, "error": "service is required"}), 400
+
+    old_system = (old.get("system") or "").strip() or "*"
+    old_service = (old.get("service") or "").strip()
+    old_col = _parse_col(old.get("column"))
+    new_system = (new.get("system") or "").strip() or "*"
+    new_col = _parse_col(new.get("column"))
+
+    if old_service and (old_system, old_service, old_col) != (new_system, service, new_col):
+        delete_reg_entry(old_system, old_service, old_col)
+
+    item = {
+        "system": new_system,
+        "service": service,
+        "column": new_col,
+        "ticket_exists": (new.get("ticket_exists") or "").strip(),
+        "ticket_id": (new.get("ticket_id") or "").strip(),
+        "ticket_notes": (new.get("ticket_notes") or "").strip(),
+    }
+    count = upsert_registry([item])
+    return jsonify({"ok": True, "total": count})
 
 
 if __name__ == "__main__":

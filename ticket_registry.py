@@ -27,6 +27,7 @@ one report teaches the registry for the future.
 
 import os
 import json
+import shutil
 import threading
 
 _PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ticket_registry.json")
@@ -86,6 +87,31 @@ def apply_to_alert(alert, index):
     return alert
 
 
+def delete_entry(system, service, column, path=None):
+    """Remove one entry from the registry by its (system, service, column) key.
+
+    Returns True if an entry was removed, False if none matched.
+    """
+    path = path or _PATH
+    with _LOCK:
+        entries = load_registry(path)
+        sys_k = system or "*"
+        col_k = "*" if column is None else column
+        target = _key(sys_k, service, col_k)
+        kept = [
+            e for e in entries
+            if _key(e.get("system") or "*", e.get("service") or "",
+                    "*" if e.get("column") is None else e.get("column")) != target
+        ]
+        if len(kept) == len(entries):
+            return False
+        tmp = path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(kept, f, indent=2)
+        shutil.move(tmp, path)
+    return True
+
+
 def upsert(items, path=None):
     """Insert/update/remove registry entries from saved ticket rows.
 
@@ -121,5 +147,5 @@ def upsert(items, path=None):
         tmp = path + ".tmp"
         with open(tmp, "w", encoding="utf-8") as f:
             json.dump(entries, f, indent=2)
-        os.replace(tmp, path)
+        shutil.move(tmp, path)
     return len(entries)

@@ -102,7 +102,9 @@ def _capture_playwright(url, out_path, headless, wait_ms):
             ) from exc
 
         try:
-            page = browser.new_page()
+            # ignore_https_errors covers self-signed / non-standard-port certs.
+            context = browser.new_context(ignore_https_errors=True)
+            page = context.new_page()
             # 'load' rather than 'networkidle': dashboards that poll never go
             # idle. The explicit wait below gives late content time to render.
             page.goto(url, wait_until="load", timeout=60_000)

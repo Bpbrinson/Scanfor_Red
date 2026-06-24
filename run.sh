@@ -12,7 +12,7 @@
 #
 set -euo pipefail
 
-IMAGE="${1:-${SCANFOR_IMAGE:-<dockerhub-user>/scanfor-red:latest}}"
+IMAGE="${1:-${SCANFOR_IMAGE:-bpbrinson/scanfor-red:latest}}"
 PORT="${SCANFOR_PORT:-5000}"
 URL="http://localhost:${PORT}"
 

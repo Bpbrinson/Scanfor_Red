@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Known Alerts Registry — Scanfor Red</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="banner">
+    <a href="{{ url_for('index') }}" class="back">← Home</a>
+    <h1>Known Alerts Registry</h1>
+    <p>Pre-filled ticket info for recurring red alerts — auto-populates future scan reports for the same errors.</p>
+  </header>
+
+  <main>
+
+    <!-- Stats -->
+    <div class="kpis" style="margin-bottom:20px">
+      <div class="kpi"><span id="stat-total">{{ total }}</span>Total Entries</div>
+      <div class="kpi"><span id="stat-open">{{ open_count }}</span>Open Tickets</div>
+      <div class="kpi"><span id="stat-no">{{ total - open_count }}</span>No Ticket</div>
+      <div class="kpi"><span id="stat-wild">{{ wildcard_count }}</span>Wildcard Entries</div>
+    </div>
+
+    <!-- Add Entry -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-head" style="margin-bottom:14px">
+        <h3 style="margin:0">Add Known Alert</h3>
+        <span class="section-note" style="margin:0">Leave System or Column blank to match any value (wildcard)</span>
+      </div>
+      <div class="reg-row-form">
+        <div class="reg-field">
+          <label class="reg-label">System <span class="muted" style="text-transform:none;letter-spacing:0">(blank = any)</span></label>
+          <input class="ticket-input" id="add-system" placeholder="labcore-ccgw-eastus2-prod-ford-vm-01">
+        </div>
+        <div class="reg-field">
+          <label class="reg-label">Service <span style="color:#9b1c1c">*</span></label>
+          <input class="ticket-input" id="add-service" placeholder="fordserver">
+        </div>
+        <div class="reg-field reg-field--sm">
+          <label class="reg-label">Column <span class="muted" style="text-transform:none;letter-spacing:0">(blank = any)</span></label>
+          <input class="ticket-input" id="add-column" type="number" min="0" max="13" placeholder="0–13">
+          <span class="col-hint" id="add-col-hint"></span>
+        </div>
+        <div class="reg-field reg-field--sm">
+          <label class="reg-label">Ticket Created?</label>
+          <select class="ticket-input" id="add-ticket-exists">
+            <option value="">—</option>
+            <option value="Yes">Yes</option>
+            <option value="No">No</option>
+          </select>
+        </div>
+        <div class="reg-field">
+          <label class="reg-label">Ticket ID</label>
+          <input class="ticket-input" id="add-ticket-id" placeholder="JIRA-1234">
+        </div>
+        <div class="reg-field reg-field--grow">
+          <label class="reg-label">Notes</label>
+          <input class="ticket-input" id="add-notes" placeholder="Brief description">
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:14px">
+        <button class="btn" id="add-btn" style="margin-top:0;padding:10px 22px;font-size:14px">Add Entry</button>
+        <span class="save-status" id="add-status"></span>
+      </div>
+    </div>
+
+    <!-- Filter toolbar -->
+    <div class="reg-toolbar">
+      <input class="ticket-input" id="filter-input" placeholder="Filter by system, service, or notes…" style="flex:1;min-width:180px">
+      <div class="chip-group">
+        <button class="chip active" data-filter="all">All ({{ total }})</button>
+        <button class="chip" data-filter="yes">Open Ticket</button>
+        <button class="chip" data-filter="no">No Ticket</button>
+        <button class="chip" data-filter="wild">Wildcards</button>
+      </div>
+    </div>
+
+    <!-- Registry table -->
+    <div class="grid reg-grid">
+      <table id="reg-table">
+        <thead>
+          <tr>
+            <th>System</th>
+            <th>Service</th>
+            <th style="text-align:center;width:60px">Column</th>
+            <th>Error Type</th>
+            <th style="text-align:center;width:80px">Ticket?</th>
+            <th>Ticket ID</th>
+            <th>Notes</th>
+            <th style="text-align:right;width:130px">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="reg-body">
+          {% for e in entries %}
+          {% set col_label = errors.get(e.column, '') if e.column is not none else '' %}
+          <tr class="reg-row"
+              data-system="{{ e.system or '*' }}"
+              data-service="{{ e.service }}"
+              data-column="{{ e.column if e.column is not none else '' }}"
+              data-ticket="{{ e.ticket_exists or '' }}"
+              data-ticket-id="{{ e.ticket_id or '' }}"
+              data-notes="{{ e.ticket_notes or '' }}">
+            <td class="mono r-system" style="font-size:12px;word-break:break-all">
+              {% if not e.system or e.system == '*' %}
+                <span class="wild-badge">*</span>
+              {% else %}
+                {{ e.system }}
+              {% endif %}
+            </td>
+            <td class="r-service"><strong>{{ e.service }}</strong></td>
+            <td class="r-column" style="text-align:center">
+              {% if e.column is not none %}{{ e.column }}
+              {% else %}<span class="wild-badge">*</span>{% endif %}
+            </td>
+            <td class="r-error">
+              {% if col_label %}
+                <span class="err-pill">{{ col_label }}</span>
+              {% elif e.column is none %}
+                <span class="none">any hour</span>
+              {% else %}
+                <span class="none">—</span>
+              {% endif %}
+            </td>
+            <td class="r-ticket" style="text-align:center">
+              {% if e.ticket_exists == 'Yes' %}
+                <span class="badge badge--yes">Yes</span>
+              {% elif e.ticket_exists == 'No' %}
+                <span class="badge badge--no">No</span>
+              {% else %}
+                <span class="none">—</span>
+              {% endif %}
+            </td>
+            <td class="mono r-ticket-id" style="font-size:12px">{{ e.ticket_id or '—' }}</td>
+            <td class="r-notes" style="font-size:13px">{{ e.ticket_notes or '' }}</td>
+            <td class="r-actions" style="text-align:right;white-space:nowrap">
+              <button class="reg-edit-btn" onclick="startEdit(this.closest('tr'))">Edit</button>
+              <button class="del-btn" style="padding:5px 10px;font-size:12px;margin-left:4px"
+                      onclick="deleteRow(this.closest('tr'))">Delete</button>
+            </td>
+          </tr>
+          {% else %}
+          <tr id="empty-row">
+            <td colspan="8" class="none" style="text-align:center;padding:32px">
+              No entries yet — add one above.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+
+  <script>
+    // Error descriptions keyed by column number (JSON has string keys).
+    const ERRORS = {{ errors|tojson }};
+    function colLabel(v) {
+      const n = parseInt(v, 10);
+      return (!isNaN(n) && ERRORS[String(n)]) ? ERRORS[String(n)] : '';
+    }
+
+    // ── Add entry ─────────────────────────────────────────────────────────────
+    document.getElementById('add-column').addEventListener('input', function () {
+      document.getElementById('add-col-hint').textContent = colLabel(this.value);
+    });
+
+    document.getElementById('add-btn').addEventListener('click', async () => {
+      const service = document.getElementById('add-service').value.trim();
+      if (!service) { setStatus('add-status', 'Service is required.', 'err'); return; }
+
+      const btn = document.getElementById('add-btn');
+      btn.disabled = true; btn.textContent = 'Adding…';
+
+      const payload = {
+        system:         document.getElementById('add-system').value.trim(),
+        service,
+        column:         document.getElementById('add-column').value.trim() || null,
+        ticket_exists:  document.getElementById('add-ticket-exists').value,
+        ticket_id:      document.getElementById('add-ticket-id').value.trim(),
+        ticket_notes:   document.getElementById('add-notes').value.trim(),
+      };
+      try {
+        const r = await post('{{ url_for("registry_upsert") }}', payload);
+        if (r.ok) {
+          setStatus('add-status', 'Entry added — refreshing…', 'saved');
+          setTimeout(() => location.reload(), 700);
+        } else {
+          setStatus('add-status', r.error || 'Failed.', 'err');
+          btn.disabled = false; btn.textContent = 'Add Entry';
+        }
+      } catch { setStatus('add-status', 'Network error.', 'err'); btn.disabled = false; btn.textContent = 'Add Entry'; }
+    });
+
+    // ── Inline edit ───────────────────────────────────────────────────────────
+    function startEdit(row) {
+      if (row.classList.contains('editing')) return;
+      row.classList.add('editing');
+      const d = row.dataset;
+
+      const def = [
+        { sel: '.r-system',    val: d.system === '*' ? '' : d.system, type: 'text',   ph: 'system or blank = any' },
+        { sel: '.r-service',   val: d.service,                        type: 'text',   ph: 'service (required)' },
+        { sel: '.r-column',    val: d.column,                         type: 'number', ph: '0–13 or blank', min: 0, max: 13 },
+        { sel: '.r-error',     skip: true },
+        { sel: '.r-ticket',    val: d.ticket,                         type: 'select', opts: [['','—'],['Yes','Yes'],['No','No']] },
+        { sel: '.r-ticket-id', val: d.ticketId,                       type: 'text',   ph: 'Ticket ID' },
+        { sel: '.r-notes',     val: d.notes,                          type: 'text',   ph: 'Notes' },
+      ];
+
+      for (const c of def) {
+        const td = row.querySelector(c.sel);
+        if (c.skip) { td.innerHTML = ''; continue; }
+        if (c.type === 'select') {
+          const sel = document.createElement('select');
+          sel.className = 'ticket-input';
+          c.opts.forEach(([v, label]) => {
+            const o = new Option(label, v);
+            if (v === c.val) o.selected = true;
+            sel.appendChild(o);
+          });
+          td.innerHTML = ''; td.appendChild(sel);
+        } else {
+          const inp = document.createElement('input');
+          inp.className = 'ticket-input';
+          inp.type = c.type; inp.value = c.val || ''; inp.placeholder = c.ph || '';
+          if (c.min !== undefined) inp.min = c.min;
+          if (c.max !== undefined) inp.max = c.max;
+          td.innerHTML = ''; td.appendChild(inp);
+        }
+      }
+
+      // Live column → error label in edit mode
+      const colInp = row.querySelector('.r-column input');
+      const errTd  = row.querySelector('.r-error');
+      if (colInp) colInp.addEventListener('input', () => {
+        const lbl = colLabel(colInp.value);
+        errTd.innerHTML = lbl
+          ? `<span class="err-pill">${lbl}</span>`
+          : `<span class="none">—</span>`;
+      });
+
+      row.querySelector('.r-actions').innerHTML = `
+        <button class="reg-save-btn" onclick="saveEdit(this.closest('tr'))">Save</button>
+        <button class="reg-cancel-btn" onclick="location.reload()">Cancel</button>
+      `;
+    }
+
+    function getVal(row, sel) {
+      const el = row.querySelector(sel + ' input, ' + sel + ' select');
+      return el ? el.value : '';
+    }
+
+    async function saveEdit(row) {
+      const d = row.dataset;
+      const service = getVal(row, '.r-service').trim();
+      if (!service) { alert('Service is required.'); return; }
+
+      const btn = row.querySelector('.reg-save-btn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+
+      const payload = {
+        old_key: {
+          system:  d.system,
+          service: d.service,
+          column:  d.column || null,
+        },
+        new_entry: {
+          system:        getVal(row, '.r-system').trim() || '*',
+          service,
+          column:        getVal(row, '.r-column').trim() || null,
+          ticket_exists: getVal(row, '.r-ticket'),
+          ticket_id:     getVal(row, '.r-ticket-id').trim(),
+          ticket_notes:  getVal(row, '.r-notes').trim(),
+        },
+      };
+      try {
+        const r = await post('{{ url_for("registry_update") }}', payload);
+        if (r.ok) { location.reload(); }
+        else { alert('Save failed: ' + (r.error || 'unknown error')); btn.disabled = false; btn.textContent = 'Save'; }
+      } catch { alert('Network error.'); btn.disabled = false; btn.textContent = 'Save'; }
+    }
+
+    async function deleteRow(row) {
+      const d = row.dataset;
+      const label = d.system + ' / ' + d.service + (d.column ? ' / hour ' + d.column : '');
+      if (!confirm('Delete known alert for:\n\n' + label + '\n\nThis cannot be undone.')) return;
+
+      try {
+        const r = await post('{{ url_for("registry_delete") }}', {
+          system:  d.system,
+          service: d.service,
+          column:  d.column || null,
+        });
+        if (r.ok) {
+          row.style.transition = 'opacity .2s, transform .2s';
+          row.style.opacity = '0';
+          row.style.transform = 'scaleY(0)';
+          setTimeout(() => { row.remove(); refreshStats(); }, 220);
+        } else { alert('Delete failed.'); }
+      } catch { alert('Network error.'); }
+    }
+
+    // ── Filter ────────────────────────────────────────────────────────────────
+    let activeFilter = 'all';
+    let searchText = '';
+
+    function applyFilter() {
+      const rows = document.querySelectorAll('#reg-body .reg-row');
+      rows.forEach(row => {
+        const d = row.dataset;
+        const haystack = (d.system + ' ' + d.service + ' ' + d.notes).toLowerCase();
+        const matchText = !searchText || haystack.includes(searchText);
+        const matchChip =
+          activeFilter === 'all'  ||
+          (activeFilter === 'yes'  && d.ticket === 'Yes') ||
+          (activeFilter === 'no'   && d.ticket !== 'Yes') ||
+          (activeFilter === 'wild' && (!d.column || d.system === '*'));
+        row.style.display = (matchText && matchChip) ? '' : 'none';
+      });
+    }
+
+    document.getElementById('filter-input').addEventListener('input', function () {
+      searchText = this.value.trim().toLowerCase();
+      applyFilter();
+    });
+    document.querySelectorAll('.chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        applyFilter();
+      });
+    });
+
+    // ── Stats live-update after delete ────────────────────────────────────────
+    function refreshStats() {
+      const rows = [...document.querySelectorAll('#reg-body .reg-row')];
+      const total = rows.length;
+      const open  = rows.filter(r => r.dataset.ticket === 'Yes').length;
+      const wild  = rows.filter(r => !r.dataset.column || r.dataset.system === '*').length;
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-open').textContent  = open;
+      document.getElementById('stat-no').textContent    = total - open;
+      document.getElementById('stat-wild').textContent  = wild;
+    }
+
+    // ── Shared helpers ────────────────────────────────────────────────────────
+    function setStatus(id, msg, cls) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = 'save-status ' + cls;
+    }
+
+    async function post(url, body) {
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      return resp.json();
+    }
+  </script>
+</body>
+</html>

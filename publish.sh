@@ -13,11 +13,16 @@
 set -euo pipefail
 cd "$(dirname "$0")"        # always run from the project folder
 
-IMAGE="${1:-${SCANFOR_IMAGE:-<dockerhub-user>/scanfor-red:latest}}"
+IMAGE="${1:-${SCANFOR_IMAGE:-bpbrinson/scanfor-red:latest}}"
 PORT="${SCANFOR_PORT:-5000}"
 NAME="${SCANFOR_NAME:-scanfor-red}"
 PLATFORMS="${SCANFOR_PLATFORMS:-linux/amd64,linux/arm64}"
 URL="http://localhost:${PORT}"
+
+# Ensure local mount targets exist before binding them. If they are missing,
+# Docker silently creates them as root-owned directories, which breaks writes.
+mkdir -p Dashboard_Screenshot outputs/json_to_excel
+[[ -f ticket_registry.json ]] || echo '{}' > ticket_registry.json
 
 echo "==> 1/3  Building & pushing ${IMAGE}"
 echo "         platforms: ${PLATFORMS}"
@@ -32,12 +37,28 @@ docker pull "${IMAGE}"
 
 echo "==> 3/3  (Re)starting container '${NAME}'"
 docker rm -f "${NAME}" >/dev/null 2>&1 || true
-docker run -d --name "${NAME}" --restart unless-stopped \
-  -p "${PORT}:5000" \
-  -v "$(pwd)/Dashboard_Screenshot:/app/Dashboard_Screenshot" \
-  -v "$(pwd)/outputs/json_to_excel:/app/outputs/json_to_excel" \
-  -v "$(pwd)/ticket_registry.json:/app/ticket_registry.json" \
-  "${IMAGE}"
+
+# Build the argument list for docker run.
+#
+# --env-file .env  passes DASHBOARD_URL, SCREENSHOT_MODE, SCREENSHOT_OUTPUT_DIR,
+#                  CHROME_CDP_URL, SCREENSHOT_WAIT_MS, and TESSERACT_CMD into the
+#                  container so the "Capture Dashboard & Scan" button works.
+#
+# -e PLAYWRIGHT_HEADLESS=true  overrides the .env value: Docker containers have
+#                  no display, so the Chromium Playwright launches must be headless.
+RUN_ARGS=(
+  -d --name "${NAME}" --restart unless-stopped
+  -p "${PORT}:5000"
+)
+[[ -f .env ]] && RUN_ARGS+=(--env-file .env)
+RUN_ARGS+=(
+  -e PLAYWRIGHT_HEADLESS=true
+  -v "$(pwd)/Dashboard_Screenshot:/app/Dashboard_Screenshot"
+  -v "$(pwd)/outputs/json_to_excel:/app/outputs/json_to_excel"
+  -v "$(pwd)/ticket_registry.json:/app/ticket_registry.json"
+)
+
+docker run "${RUN_ARGS[@]}" "${IMAGE}"
 
 # Open the browser once the server is up.
 ( sleep 3
